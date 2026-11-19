@@ -9,4 +9,6 @@
 - Implemented and tested the first end-to-end deterministic offline file workflow with policy enforcement and verification.
 - Created the empty `main` bootstrap and pushed the initial tested RelayPilot source to `develop`. No PR was created and `main` has no application source.
 - CI initially failed because the hosted runner does not preinstall `setuptools`; replaced the packaging-dependent test setup with a direct `src`-path test invocation.
+- CI passed on `develop` after the correction; local and hosted suites each passed all five tests.
+
 
