@@ -33,3 +33,12 @@ py -m relaypilot.app
 ```
 
 To let RelayPilot work in another local folder, add its JSON-escaped absolute path to `readable_folders` in `settings.json`, then restart the app. Example: `"readable_folders": ["C:\\Users\\USER\\Downloads", "C:\\Users\\USER\\Documents", "D:\\Work"]`.
+
+## Install the Chrome companion
+
+1. Start RelayPilot with `py -m relaypilot.app` so the local bridge is available at `127.0.0.1:8721`.
+2. Open `chrome://extensions`, enable **Developer mode**, and choose **Load unpacked**.
+3. Select the repository's `extension` folder and pin RelayPilot.
+4. Click RelayPilot, type or dictate a task, review it, then select **Run task**.
+
+The extension only receives active-tab permission plus access to the local bridge. It does not silently access browser passwords, cookies, private Google data, or every browser tab. It can explicitly search Google, open Gmail in your existing profile, or read the active page. A future Google OAuth integration should request only the specific Google scopes you select.

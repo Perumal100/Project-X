@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import time
@@ -213,4 +214,11 @@ class RelayEngineTests(unittest.TestCase):
                 os.environ.pop("RELAYPILOT_DATA_DIR", None)
             else:
                 os.environ["RELAYPILOT_DATA_DIR"] = original
+
+    def test_extension_has_active_tab_scope_not_unrestricted_site_access(self) -> None:
+        manifest_path = Path(__file__).parents[1] / "extension" / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertIn("activeTab", manifest["permissions"])
+        self.assertNotIn("<all_urls>", manifest.get("host_permissions", []))
+        self.assertIn("http://127.0.0.1:8721/*", manifest["host_permissions"])
 

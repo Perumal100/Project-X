@@ -42,3 +42,8 @@
 - A routing conflict in the PDF copy command was found by tests and fixed before release. Automated suite now passes 22 tests.
 - GitHub Actions exposed a Windows 8.3 short-path representation difference in a test assertion; corrected the test to compare the actual folder identity rather than path spelling.
 
+### 04:07
+
+- Added a Manifest V3 Chrome companion with an explicit command popup, optional voice transcription, active-tab page reading, Google search/Gmail opening, and a localhost bridge to the local executor.
+- Restricted extension permissions to the active tab and local bridge; it does not silently access passwords, cookies, private Google data, or all browser tabs. Automated suite passes 23 tests and validates the manifest.
+

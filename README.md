@@ -11,6 +11,10 @@ pip install --no-build-isolation -e .
 relaypilot
 ```
 
+## Chrome extension
+
+The `extension/` folder contains a Manifest V3 Chrome companion. Load it from `chrome://extensions` using **Developer mode → Load unpacked**, then pin RelayPilot. When the local app is running, the extension forwards eligible local commands to it. Otherwise it can only act on the active tab after an explicit run: Google search, opening Gmail, or reading visible text. Full instructions are in [extension/README.md](extension/README.md).
+
 The command box intentionally does nothing until you click **Run task** or press `Ctrl+Enter`; this makes Wispr or browser voice capture safe by default. Browser voice capture needs a user-approved microphone prompt; it only transcribes into the box and never auto-runs a task.
 
 Try: `Find the newest PDF in Downloads, copy it to Documents, open the copy, and tell me where you saved it.`
