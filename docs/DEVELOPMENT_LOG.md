@@ -15,5 +15,6 @@
 
 - Added a bounded, read-only Heat-Signal status workflow with executor-side HTTPS allow-list enforcement.
 - Added mocked connected-read, offline/connectivity, and ungranted-site regression tests; local suite passed 8 tests.
-- Pending: push the browser milestone to `develop`, validate CI, and open a review PR without merging it.
+- Pushed the browser milestone to `develop`; the 8-test local and GitHub Actions suites passed.
+- Opened review PR #1 from `develop` to `main`; it remains intentionally unmerged.
 
