@@ -11,4 +11,9 @@
 - CI initially failed because the hosted runner does not preinstall `setuptools`; replaced the packaging-dependent test setup with a direct `src`-path test invocation.
 - CI passed on `develop` after the correction; local and hosted suites each passed all five tests.
 
+### 03:02
+
+- Added a bounded, read-only Heat-Signal status workflow with executor-side HTTPS allow-list enforcement.
+- Added mocked connected-read, offline/connectivity, and ungranted-site regression tests; local suite passed 8 tests.
+- Pending: push the browser milestone to `develop`, validate CI, and open a review PR without merging it.
 

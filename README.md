@@ -23,11 +23,12 @@ The app uses your Windows Downloads and Documents folders. It will only operate 
 - Typed, policy-checked local actions; no arbitrary shell execution.
 - Source/destination path containment, collision prevention, source hashing, destination hashing, and actual-path reporting.
 - Explicit submit, stop token, visible event feed, run states, and safe policy handoffs.
+- Read-only, explicitly site-scoped Heat-Signal status check with a clear offline/connectivity result.
 - Tests for copy verification, blocked permissions, untrusted text, offline mode, stop behavior, and uncertain-outcome reconciliation.
 
 ## Not yet a claim of completion
 
-Browser automation, UI Automation/multi-monitor control, online and on-device model adapters, installer signing, and a real interactive Windows hardware pass are planned interfaces, not delivered capabilities. See [docs/DECISIONS.md](docs/DECISIONS.md), [docs/OFFLINE.md](docs/OFFLINE.md), and [HANDOFF.md](HANDOFF.md).
+Structured browser automation, UI Automation/multi-monitor control, online and on-device model adapters, installer signing, and a real interactive Windows hardware pass are planned interfaces, not delivered capabilities. The current browser workflow is read-only and only accesses the specifically granted Heat-Signal site. See [docs/DECISIONS.md](docs/DECISIONS.md), [docs/OFFLINE.md](docs/OFFLINE.md), and [HANDOFF.md](HANDOFF.md).
 
 ## Test
 

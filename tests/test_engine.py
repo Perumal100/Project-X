@@ -67,3 +67,32 @@ class RelayEngineTests(unittest.TestCase):
         with self.assertRaises(PolicyDenied):
             policy.authorize(Action("copy_file", {"source": self.downloads / "newest.pdf", "destination": Path.cwd() / "nope.pdf"}))
 
+    def test_reads_allowed_browser_status_with_mocked_network(self) -> None:
+        engine = RelayEngine(
+            self.downloads,
+            self.documents,
+            page_fetcher=lambda _url: "<html><body><h1>Heat Signal</h1><p>Status: Data loaded</p></body></html>",
+        )
+        result = engine.run("Open Heat-Signal and report the visible status")
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertIn("Status: Data loaded", result.events[-1].evidence)
+
+    def test_browser_connectivity_failure_is_clear_and_does_not_retry(self) -> None:
+        attempts = 0
+
+        def offline(_url: str) -> str:
+            nonlocal attempts
+            attempts += 1
+            raise OSError("network disabled")
+
+        engine = RelayEngine(self.downloads, self.documents, page_fetcher=offline)
+        result = engine.run("Open Heat-Signal and report the visible status")
+        self.assertEqual(result.state, RunState.BLOCKED)
+        self.assertIn("Connectivity is required", result.reason or "")
+        self.assertEqual(attempts, 1)
+
+    def test_browser_read_rejects_ungranted_site(self) -> None:
+        policy = Policy((self.downloads,), (self.documents,))
+        with self.assertRaises(PolicyDenied):
+            policy.authorize(Action("browser_read_status", {"url": "https://example.invalid/status"}))
+

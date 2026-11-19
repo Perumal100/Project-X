@@ -6,4 +6,5 @@
 - **Boundary:** planner emits only `find_newest_pdf`, `copy_file`, and `open_file`; executor validates permissions and paths. No planner can execute a shell command.
 - **Offline first:** the initial file workflow has no HTTP or model dependency. Flexible planners will be adapters with explicit cloud/offline configuration.
 - **Permissions:** Downloads read, Documents write, and opening a verified result are narrowly modeled grants. External effects are denied by default and must hand off.
+- **Connected reads:** Heat-Signal is the sole allow-listed browser site in this milestone. The executor, not the planner or page, validates its HTTPS host before opening a bounded read-only request.
 

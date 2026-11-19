@@ -3,7 +3,11 @@ from __future__ import annotations
 import hashlib
 import os
 import shutil
+from html.parser import HTMLParser
 from pathlib import Path
+from typing import Any, Callable
+from urllib.error import URLError
+from urllib.request import Request, urlopen
 
 from .models import Action
 from .policy import Policy
@@ -13,13 +17,18 @@ class StopRequested(RuntimeError):
     pass
 
 
+class ConnectivityRequired(RuntimeError):
+    """The requested read-only browser workflow needs an available network."""
+
+
 class LocalExecutor:
-    def __init__(self, policy: Policy, stop_requested=lambda: False, opener=None) -> None:
+    def __init__(self, policy: Policy, stop_requested=lambda: False, opener=None, page_fetcher=None) -> None:
         self.policy = policy
         self.stop_requested = stop_requested
         self.opener = opener or self._default_open
+        self.page_fetcher: Callable[[str], str] = page_fetcher or self._fetch_page
 
-    def execute(self, action: Action, context: dict[str, Path]) -> tuple[str, str]:
+    def execute(self, action: Action, context: dict[str, Any]) -> tuple[str, str]:
         self._check_stop()
         if action.kind == "find_newest_pdf":
             folder = Path(action.arguments["folder"])
@@ -57,6 +66,18 @@ class LocalExecutor:
                 raise FileNotFoundError(f"Verified file no longer exists: {target}")
             self.opener(target)
             return (f"Opened verified copy: {target.name}", str(target.resolve()))
+
+        if action.kind == "browser_read_status":
+            self.policy.authorize(action)
+            url = str(action.arguments["url"])
+            try:
+                html = self.page_fetcher(url)
+            except (OSError, URLError, TimeoutError) as error:
+                raise ConnectivityRequired(f"Connectivity is required to read {url}: {error}") from error
+            self._check_stop()
+            status = _visible_status(html)
+            context["browser_status"] = status
+            return ("Read visible page status", f"url={url}; visible status={status}")
         raise ValueError(f"Unsupported action: {action.kind}")
 
     def _check_stop(self) -> None:
@@ -68,6 +89,12 @@ class LocalExecutor:
         if os.name == "nt":
             os.startfile(path)  # type: ignore[attr-defined]
 
+    @staticmethod
+    def _fetch_page(url: str) -> str:
+        request = Request(url, headers={"User-Agent": "RelayPilot/0.1 (read-only status check)"})
+        with urlopen(request, timeout=10) as response:  # nosec B310: URL is policy-checked before this call.
+            return response.read(1_000_000).decode(response.headers.get_content_charset() or "utf-8", errors="replace")
+
 
 def _sha256(path: Path) -> str:
     digest = hashlib.sha256()
@@ -75,4 +102,34 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+class _VisibleTextParser(HTMLParser):
+    def __init__(self) -> None:
+        super().__init__()
+        self.hidden_depth = 0
+        self.parts: list[str] = []
+
+    def handle_starttag(self, tag: str, attrs) -> None:
+        if tag in {"script", "style", "noscript"}:
+            self.hidden_depth += 1
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag in {"script", "style", "noscript"} and self.hidden_depth:
+            self.hidden_depth -= 1
+
+    def handle_data(self, data: str) -> None:
+        if not self.hidden_depth:
+            self.parts.append(data)
+
+
+def _visible_status(html: str) -> str:
+    """Return a bounded visible-text status; page text is never treated as instructions."""
+    parser = _VisibleTextParser()
+    parser.feed(html)
+    text = " ".join(" ".join(parser.parts).split())
+    marker = text.lower().find("status")
+    if marker >= 0:
+        return text[marker : marker + 160]
+    return text[:160] or "No visible status text was found."
 

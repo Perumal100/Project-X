@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlparse
 
 from .models import Action
 
@@ -14,7 +15,10 @@ class PolicyDenied(PermissionError):
 class Policy:
     readable_roots: tuple[Path, ...]
     writable_roots: tuple[Path, ...]
-    allowed_actions: set[str] = field(default_factory=lambda: {"find_newest_pdf", "copy_file", "open_file"})
+    allowed_sites: set[str] = field(default_factory=lambda: {"perumal100.github.io"})
+    allowed_actions: set[str] = field(
+        default_factory=lambda: {"find_newest_pdf", "copy_file", "open_file", "browser_read_status"}
+    )
     allow_open_verified_file: bool = True
 
     def authorize(self, action: Action) -> None:
@@ -27,6 +31,10 @@ class Policy:
             self._require_within(Path(action.arguments["destination"]), self.writable_roots, "destination")
         if action.kind == "open_file" and not self.allow_open_verified_file:
             raise PolicyDenied("Opening files is not authorized")
+        if action.kind == "browser_read_status":
+            parsed = urlparse(str(action.arguments["url"]))
+            if parsed.scheme != "https" or parsed.hostname not in self.allowed_sites:
+                raise PolicyDenied("Browser read is outside the configured HTTPS site grant")
 
     @staticmethod
     def _require_within(candidate: Path, roots: tuple[Path, ...], label: str) -> None:

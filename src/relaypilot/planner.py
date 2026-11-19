@@ -14,6 +14,8 @@ class DeterministicOfflinePlanner:
 
     def plan(self, command: str, downloads: Path, documents: Path) -> list[Action]:
         normalized = " ".join(command.lower().split())
+        if "heat-signal" in normalized and "status" in normalized:
+            return [Action("browser_read_status", {"url": "https://perumal100.github.io/Heat-Signal/"})]
         required = ("newest pdf", "downloads", "copy", "documents")
         if not all(fragment in normalized for fragment in required):
             raise UnsupportedCommand(
