@@ -49,5 +49,8 @@ class RelaySettings:
 
 
 def default_settings_path() -> Path:
-    base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local"))
-    return base / "RelayPilot" / "settings.json"
+    override = os.environ.get("RELAYPILOT_DATA_DIR")
+    if override:
+        return Path(override) / "settings.json"
+    profile = Path(os.environ.get("USERPROFILE", Path.home()))
+    return profile / "AppData" / "Local" / "RelayPilot" / "settings.json"
