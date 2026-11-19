@@ -17,7 +17,9 @@ class Policy:
     writable_roots: tuple[Path, ...]
     allowed_sites: set[str] = field(default_factory=lambda: {"perumal100.github.io"})
     allowed_actions: set[str] = field(
-        default_factory=lambda: {"find_newest_pdf", "copy_file", "open_file", "browser_read_status"}
+        default_factory=lambda: {
+            "find_newest_pdf", "find_oldest_pdf", "count_pdfs", "copy_file", "open_file", "open_path", "browser_read_status"
+        }
     )
     allow_open_verified_file: bool = True
 
@@ -29,6 +31,10 @@ class Policy:
         if action.kind == "copy_file":
             self._require_within(Path(action.arguments["source"]), self.readable_roots, "source")
             self._require_within(Path(action.arguments["destination"]), self.writable_roots, "destination")
+        if action.kind in {"find_newest_pdf", "find_oldest_pdf", "count_pdfs"}:
+            self._require_within(Path(action.arguments["folder"]), self.readable_roots, "folder")
+        if action.kind in {"open_file", "open_path"}:
+            self._require_within(Path(action.arguments["path"]), self.readable_roots, "path")
         if action.kind == "open_file" and not self.allow_open_verified_file:
             raise PolicyDenied("Opening files is not authorized")
         if action.kind == "browser_read_status":

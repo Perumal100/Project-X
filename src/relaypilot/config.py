@@ -14,9 +14,12 @@ class RelaySettings:
 
     downloads: str
     documents: str
+    readable_folders: list[str] = field(default_factory=list)
     allowed_sites: list[str] = field(default_factory=lambda: ["perumal100.github.io"])
     allowed_actions: list[str] = field(
-        default_factory=lambda: ["find_newest_pdf", "copy_file", "open_file", "browser_read_status"]
+        default_factory=lambda: [
+            "find_newest_pdf", "find_oldest_pdf", "count_pdfs", "copy_file", "open_file", "open_path", "browser_read_status"
+        ]
     )
     cloud_planning_enabled: bool = False
     cloud_screen_sharing_enabled: bool = False
@@ -24,7 +27,7 @@ class RelaySettings:
 
     @classmethod
     def defaults(cls, downloads: Path, documents: Path) -> "RelaySettings":
-        return cls(str(downloads), str(documents))
+        return cls(str(downloads), str(documents), readable_folders=[str(downloads), str(documents)])
 
     @classmethod
     def load(cls, path: Path, fallback: "RelaySettings") -> "RelaySettings":
@@ -40,8 +43,9 @@ class RelaySettings:
         temporary.replace(path)
 
     def policy(self) -> Policy:
+        readable = self.readable_folders or [self.downloads, self.documents]
         return Policy(
-            (Path(self.downloads),),
+            tuple(Path(path) for path in readable),
             (Path(self.documents),),
             allowed_sites=set(self.allowed_sites),
             allowed_actions=set(self.allowed_actions),

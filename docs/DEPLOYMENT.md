@@ -31,3 +31,5 @@ By default, settings and local run history are stored in `%USERPROFILE%\AppData\
 $env:RELAYPILOT_DATA_DIR = "C:\RelayPilotData"
 py -m relaypilot.app
 ```
+
+To let RelayPilot work in another local folder, add its JSON-escaped absolute path to `readable_folders` in `settings.json`, then restart the app. Example: `"readable_folders": ["C:\\Users\\USER\\Downloads", "C:\\Users\\USER\\Documents", "D:\\Work"]`.

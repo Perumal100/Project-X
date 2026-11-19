@@ -102,6 +102,26 @@ class RelayEngineTests(unittest.TestCase):
         with self.assertRaises(PolicyDenied):
             policy.authorize(Action("browser_read_status", {"url": "https://example.invalid/status"}))
 
+    def test_counts_pdfs_in_downloads_from_natural_command(self) -> None:
+        result = self.engine.run("I just want you to identify how many PDFs are saved in my downloads folder")
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertIn("Counted 2 PDFs", result.events[-1].message)
+
+    def test_finds_and_opens_oldest_pdf_from_natural_command(self) -> None:
+        result = self.engine.run("Open my oldest PDF on my PC")
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(self.opened, [(self.downloads / "old.pdf").resolve()])
+
+    def test_opens_an_approved_folder_from_natural_command(self) -> None:
+        result = self.engine.run("Open my Downloads folder")
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(self.opened, [self.downloads.resolve()])
+
+    def test_open_path_never_escapes_an_explicit_file_scope(self) -> None:
+        policy = Policy((self.downloads,), (self.documents,))
+        with self.assertRaises(PolicyDenied):
+            policy.authorize(Action("open_path", {"path": Path.cwd()}))
+
     def test_form_submission_remains_outside_a_standing_read_grant(self) -> None:
         policy = Policy((self.downloads,), (self.documents,))
         with self.assertRaises(PolicyDenied):

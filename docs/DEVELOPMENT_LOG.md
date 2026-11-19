@@ -36,3 +36,8 @@
 - Added a configurable local data-directory override for constrained environments. Automated validation now passes 18 tests and confirms the portable package includes UI assets.
 - Local screenshot-level preview could not bind a loopback socket in the coding sandbox; interactive visual and microphone checks remain for the Windows desktop launch.
 
+### 04:02
+
+- Expanded deterministic local commands to count PDFs in Downloads, find/open the oldest PDF, and open approved local folders. Added editable `readable_folders` scopes.
+- A routing conflict in the PDF copy command was found by tests and fixed before release. Automated suite now passes 22 tests.
+

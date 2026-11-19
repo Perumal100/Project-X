@@ -15,6 +15,8 @@ The command box intentionally does nothing until you click **Run task** or press
 
 Try: `Find the newest PDF in Downloads, copy it to Documents, open the copy, and tell me where you saved it.`
 
+Other built-in local commands include `How many PDFs are saved in my Downloads folder?`, `Open my oldest PDF on my PC`, and `Open my Downloads folder`. RelayPilot searches and opens only folders included in your local `readable_folders` grant.
+
 The app uses your Windows Downloads and Documents folders. It will only operate inside these configured roots. The UI opens the copy only after its hash and destination are verified.
 
 ## What is verified in v0.1
@@ -33,6 +35,8 @@ The app uses your Windows Downloads and Documents folders. It will only operate 
 Structured browser automation, UI Automation/multi-monitor control, online and on-device model adapters, installer signing, and a real interactive Windows hardware pass are planned interfaces, not delivered capabilities. The current browser workflow is read-only and only accesses the specifically granted Heat-Signal site. See [docs/DECISIONS.md](docs/DECISIONS.md), [docs/OFFLINE.md](docs/OFFLINE.md), and [HANDOFF.md](HANDOFF.md).
 
 Settings are kept locally at `%USERPROFILE%\AppData\Local\RelayPilot\settings.json`; browser profile and run history also stay there and are ignored by Git. Set `RELAYPILOT_DATA_DIR` if your organization requires another local data location. This settings file is intentionally limited to scopes and provider choices—never secrets or session data.
+
+To allow another local drive or folder, add its absolute path to `readable_folders`, close/reopen RelayPilot, and keep the scope as narrow as practical. For example, add `D:\Work` to allow routine work in that folder; do not add an entire drive unless you genuinely intend RelayPilot to read and open everything on it.
 
 ## Test
 
