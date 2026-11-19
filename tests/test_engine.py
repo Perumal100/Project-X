@@ -115,7 +115,8 @@ class RelayEngineTests(unittest.TestCase):
     def test_opens_an_approved_folder_from_natural_command(self) -> None:
         result = self.engine.run("Open my Downloads folder")
         self.assertEqual(result.state, RunState.COMPLETED)
-        self.assertEqual(self.opened, [self.downloads.resolve()])
+        self.assertEqual(len(self.opened), 1)
+        self.assertTrue(self.opened[0].samefile(self.downloads))
 
     def test_open_path_never_escapes_an_explicit_file_scope(self) -> None:
         policy = Policy((self.downloads,), (self.documents,))

@@ -40,4 +40,5 @@
 
 - Expanded deterministic local commands to count PDFs in Downloads, find/open the oldest PDF, and open approved local folders. Added editable `readable_folders` scopes.
 - A routing conflict in the PDF copy command was found by tests and fixed before release. Automated suite now passes 22 tests.
+- GitHub Actions exposed a Windows 8.3 short-path representation difference in a test assertion; corrected the test to compare the actual folder identity rather than path spelling.
 
