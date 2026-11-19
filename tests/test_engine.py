@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import tempfile
 import time
@@ -102,6 +103,27 @@ class RelayEngineTests(unittest.TestCase):
         with self.assertRaises(PolicyDenied):
             policy.authorize(Action("browser_read_status", {"url": "https://example.invalid/status"}))
 
+    def test_counts_pdfs_in_downloads_from_natural_command(self) -> None:
+        result = self.engine.run("I just want you to identify how many PDFs are saved in my downloads folder")
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertIn("Counted 2 PDFs", result.events[-1].message)
+
+    def test_finds_and_opens_oldest_pdf_from_natural_command(self) -> None:
+        result = self.engine.run("Open my oldest PDF on my PC")
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(self.opened, [(self.downloads / "old.pdf").resolve()])
+
+    def test_opens_an_approved_folder_from_natural_command(self) -> None:
+        result = self.engine.run("Open my Downloads folder")
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(len(self.opened), 1)
+        self.assertTrue(self.opened[0].samefile(self.downloads))
+
+    def test_open_path_never_escapes_an_explicit_file_scope(self) -> None:
+        policy = Policy((self.downloads,), (self.documents,))
+        with self.assertRaises(PolicyDenied):
+            policy.authorize(Action("open_path", {"path": Path.cwd()}))
+
     def test_form_submission_remains_outside_a_standing_read_grant(self) -> None:
         policy = Policy((self.downloads,), (self.documents,))
         with self.assertRaises(PolicyDenied):
@@ -192,4 +214,22 @@ class RelayEngineTests(unittest.TestCase):
                 os.environ.pop("RELAYPILOT_DATA_DIR", None)
             else:
                 os.environ["RELAYPILOT_DATA_DIR"] = original
+
+    def test_legacy_settings_gain_new_routine_actions_once(self) -> None:
+        settings_file = Path(self.temp.name) / "legacy-settings.json"
+        settings_file.write_text(
+            json.dumps({"downloads": str(self.downloads), "documents": str(self.documents), "allowed_actions": ["find_newest_pdf"]}),
+            encoding="utf-8",
+        )
+        restored = RelaySettings.load(settings_file, RelaySettings.defaults(self.downloads, self.documents))
+        self.assertEqual(restored.schema_version, 2)
+        self.assertIn("count_pdfs", restored.allowed_actions)
+        self.assertIn(str(self.documents), restored.readable_folders)
+
+    def test_extension_has_active_tab_scope_not_unrestricted_site_access(self) -> None:
+        manifest_path = Path(__file__).parents[1] / "extension" / "manifest.json"
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        self.assertIn("activeTab", manifest["permissions"])
+        self.assertNotIn("<all_urls>", manifest.get("host_permissions", []))
+        self.assertIn("http://127.0.0.1:8721/*", manifest["host_permissions"])
 

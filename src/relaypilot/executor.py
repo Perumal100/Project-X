@@ -32,13 +32,30 @@ class LocalExecutor:
         self._check_stop()
         if action.kind == "find_newest_pdf":
             folder = Path(action.arguments["folder"])
-            self.policy.authorize(Action("find_newest_pdf"))
-            candidates = [p for p in folder.rglob("*.pdf") if p.is_file()]
+            self.policy.authorize(Action("find_newest_pdf", {"folder": folder}))
+            candidates = _pdfs(folder)
             if not candidates:
                 raise FileNotFoundError(f"No PDF found in {folder}")
             newest = max(candidates, key=lambda item: item.stat().st_mtime)
             context["newest_pdf"] = newest.resolve()
             return (f"Found newest PDF: {newest.name}", str(newest.resolve()))
+
+        if action.kind == "find_oldest_pdf":
+            folder = Path(action.arguments["folder"])
+            self.policy.authorize(Action("find_oldest_pdf", {"folder": folder}))
+            candidates = _pdfs(folder)
+            if not candidates:
+                raise FileNotFoundError(f"No PDF found in {folder}")
+            oldest = min(candidates, key=lambda item: item.stat().st_mtime)
+            context["selected_pdf"] = oldest.resolve()
+            return (f"Found oldest PDF: {oldest.name}", str(oldest.resolve()))
+
+        if action.kind == "count_pdfs":
+            folder = Path(action.arguments["folder"])
+            self.policy.authorize(Action("count_pdfs", {"folder": folder}))
+            count = len(_pdfs(folder))
+            context["pdf_count"] = count
+            return (f"Counted {count} PDF{'s' if count != 1 else ''}", f"folder={folder.resolve()}; count={count}")
 
         if action.kind == "copy_file":
             source = context["newest_pdf"] if action.arguments["source"] == "@newest_pdf" else Path(action.arguments["source"])
@@ -59,13 +76,27 @@ class LocalExecutor:
             return (f"Copied and verified: {destination.name}", f"sha256={destination_hash}; path={destination.resolve()}")
 
         if action.kind == "open_file":
-            target = context["copied_pdf"] if action.arguments["path"] == "@copied_pdf" else Path(action.arguments["path"])
-            self.policy.authorize(Action("open_file"))
+            if action.arguments["path"] == "@copied_pdf":
+                target = context["copied_pdf"]
+            elif action.arguments["path"] == "@selected_pdf":
+                target = context["selected_pdf"]
+            else:
+                target = Path(action.arguments["path"])
+            self.policy.authorize(Action("open_file", {"path": target}))
             self._check_stop()
             if not target.exists():
                 raise FileNotFoundError(f"Verified file no longer exists: {target}")
             self.opener(target)
             return (f"Opened verified copy: {target.name}", str(target.resolve()))
+
+        if action.kind == "open_path":
+            target = Path(action.arguments["path"])
+            self.policy.authorize(Action("open_path", {"path": target}))
+            self._check_stop()
+            if not target.exists():
+                raise FileNotFoundError(f"Path does not exist: {target}")
+            self.opener(target)
+            return (f"Opened approved location: {target.name or target.drive}", str(target.resolve()))
 
         if action.kind == "browser_read_status":
             self.policy.authorize(action)
@@ -102,6 +133,10 @@ def _sha256(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def _pdfs(folder: Path) -> list[Path]:
+    return [item for item in folder.rglob("*") if item.is_file() and item.suffix.lower() == ".pdf"]
 
 
 class _VisibleTextParser(HTMLParser):

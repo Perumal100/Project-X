@@ -24,15 +24,28 @@ class DeterministicOfflinePlanner:
         if "heat-signal" in normalized and "status" in normalized:
             return [Action("browser_read_status", {"url": "https://perumal100.github.io/Heat-Signal/"})]
         required = ("newest pdf", "downloads", "copy", "documents")
-        if not all(fragment in normalized for fragment in required):
-            raise UnsupportedCommand(
-                "Offline mode currently supports the newest-PDF Downloads-to-Documents workflow."
-            )
-        return [
-            Action("find_newest_pdf", {"folder": downloads}),
-            Action("copy_file", {"source": "@newest_pdf", "destination_folder": documents}),
-            Action("open_file", {"path": "@copied_pdf"}),
-        ]
+        if all(fragment in normalized for fragment in required):
+            return [
+                Action("find_newest_pdf", {"folder": downloads}),
+                Action("copy_file", {"source": "@newest_pdf", "destination_folder": documents}),
+                Action("open_file", {"path": "@copied_pdf"}),
+            ]
+        if "how many" in normalized and "pdf" in normalized and "download" in normalized:
+            return [Action("count_pdfs", {"folder": downloads})]
+        if "oldest pdf" in normalized:
+            actions = [Action("find_oldest_pdf", {"folder": downloads})]
+            if "open" in normalized:
+                actions.append(Action("open_file", {"path": "@selected_pdf"}))
+            return actions
+        if "open" in normalized and "local disk d" in normalized:
+            return [Action("open_path", {"path": Path("D:/")})]
+        if "open" in normalized and "download" in normalized:
+            return [Action("open_path", {"path": downloads})]
+        if "open" in normalized and "document" in normalized:
+            return [Action("open_path", {"path": documents})]
+        raise UnsupportedCommand(
+            "No deterministic local workflow matches that command. Try a supported file or status request, or configure an on-device planner."
+        )
 
 
 class PlannerRouter:

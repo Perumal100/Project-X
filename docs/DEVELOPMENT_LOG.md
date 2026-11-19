@@ -36,3 +36,15 @@
 - Added a configurable local data-directory override for constrained environments. Automated validation now passes 18 tests and confirms the portable package includes UI assets.
 - Local screenshot-level preview could not bind a loopback socket in the coding sandbox; interactive visual and microphone checks remain for the Windows desktop launch.
 
+### 04:02
+
+- Expanded deterministic local commands to count PDFs in Downloads, find/open the oldest PDF, and open approved local folders. Added editable `readable_folders` scopes.
+- A routing conflict in the PDF copy command was found by tests and fixed before release. Automated suite now passes 22 tests.
+- GitHub Actions exposed a Windows 8.3 short-path representation difference in a test assertion; corrected the test to compare the actual folder identity rather than path spelling.
+
+### 04:07
+
+- Added a Manifest V3 Chrome companion with an explicit command popup, optional voice transcription, active-tab page reading, Google search/Gmail opening, and a localhost bridge to the local executor.
+- Restricted extension permissions to the active tab and local bridge; it does not silently access passwords, cookies, private Google data, or all browser tabs. Automated suite passes 23 tests and validates the manifest.
+- Added a settings migration so pre-existing installations gain the new routine local actions and readable-folder scopes once, without overriding later user-managed settings.
+
