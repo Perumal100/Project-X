@@ -23,9 +23,10 @@ class RelayEngine:
         settings: RelaySettings | None = None,
         history: RunHistory | None = None,
     ) -> None:
-        self.downloads, self.documents = downloads, documents
-        self._stop = threading.Event()
         self.settings = settings or RelaySettings.defaults(downloads, documents)
+        self.downloads = Path(self.settings.downloads)
+        self.documents = Path(self.settings.documents)
+        self._stop = threading.Event()
         self.planner = PlannerRouter()
         self.policy = self.settings.policy()
         self.opener = opener

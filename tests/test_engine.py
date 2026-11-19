@@ -114,6 +114,17 @@ class RelayEngineTests(unittest.TestCase):
         self.assertEqual(restored.allowed_sites, ["perumal100.github.io"])
         self.assertEqual(restored.policy().writable_roots, (self.documents,))
 
+    def test_engine_uses_the_configured_folder_scopes(self) -> None:
+        alternate_downloads = Path(self.temp.name) / "ApprovedDownloads"
+        alternate_documents = Path(self.temp.name) / "ApprovedDocuments"
+        alternate_downloads.mkdir()
+        alternate_documents.mkdir()
+        (alternate_downloads / "daily.pdf").write_bytes(b"daily")
+        settings = RelaySettings.defaults(alternate_downloads, alternate_documents)
+        result = RelayEngine(self.downloads, self.documents, opener=self.opened.append, settings=settings).run(COMMAND)
+        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertTrue((alternate_documents / "daily.pdf").exists())
+
     def test_history_is_local_and_redacts_secrets(self) -> None:
         history = RunHistory(Path(self.temp.name) / "history.jsonl")
         engine = RelayEngine(self.downloads, self.documents, opener=self.opened.append, history=history)

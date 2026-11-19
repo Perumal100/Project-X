@@ -28,4 +28,5 @@
 ### 03:27
 
 - Observed that PR #1 had been merged externally while the final-baseline commit was in progress. Opened PR #2 for the one remaining `develop` commit and left it unmerged.
+- Corrected the engine so configured folder scopes drive both planning and permission checks, then added a regression test.
 
