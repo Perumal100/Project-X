@@ -10,6 +10,8 @@ The local settings file makes allowed folders/sites editable, and a local JSONL 
 
 Verified in this development environment: 15 automated tests, portable package contents, and a live read-only Heat-Signal status response. The test results are recorded in `docs/DEVELOPMENT_LOG.md`.
 
+The current UI is served locally by `relaypilot.webapp` and launched as an app-style browser window by `relaypilot.app`. It provides optional browser voice capture as transcription only; the user still explicitly runs each task. Latest automated validation: 18 tests. Validate the visual layout and microphone browser prompt on the interactive Windows desktop after updating from `develop`.
+
 ## Resume steps
 
 1. Run `py -m unittest discover -s tests -v`.

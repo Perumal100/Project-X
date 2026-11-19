@@ -4,6 +4,8 @@ import os
 from dataclasses import dataclass
 from pathlib import Path
 
+from .config import default_settings_path
+
 
 @dataclass(frozen=True)
 class BrowserHandoff:
@@ -16,7 +18,7 @@ class BrowserProfile:
     """Owns only a local profile location; the user completes sign-in/MFA/CAPTCHA."""
 
     def __init__(self, path: Path | None = None) -> None:
-        default = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "RelayPilot" / "browser-profile"
+        default = default_settings_path().with_name("browser-profile")
         self.path = path or default
 
     def prepare(self) -> Path:

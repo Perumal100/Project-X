@@ -30,3 +30,9 @@
 - Observed that PR #1 had been merged externally while the final-baseline commit was in progress. Opened PR #2 for the one remaining `develop` commit and left it unmerged.
 - Corrected the engine so configured folder scopes drive both planning and permission checks, then added a regression test.
 
+### 03:50
+
+- Replaced the dated Tkinter interface with a local-only, app-style web workspace featuring modern visual hierarchy, live evidence, local grants/history, and browser voice capture that still requires explicit task submission.
+- Added a configurable local data-directory override for constrained environments. Automated validation now passes 18 tests and confirms the portable package includes UI assets.
+- Local screenshot-level preview could not bind a loopback socket in the coding sandbox; interactive visual and microphone checks remain for the Windows desktop launch.
+

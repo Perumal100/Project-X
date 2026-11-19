@@ -5,10 +5,10 @@
 1. Clone the `develop` branch and install Python 3.11+.
 2. In PowerShell, set `$env:PYTHONPATH = "$PWD\src"`.
 3. Run `py -m unittest discover -s tests -v`; the current automated suite should pass all 12 tests.
-4. Start the app with `py -m relaypilot.app`.
-5. Put a harmless PDF in Downloads, dictate or type the documented command, then press `Ctrl+Enter`. Confirm the shown evidence path and the copy in Documents.
+4. Start the app with `py -m relaypilot.app`. RelayPilot opens a dedicated modern local app window.
+5. Approve microphone access only if you choose the Voice control; alternatively, dictate with Wispr into the command composer. Review transcription, then press **Run task** or `Ctrl+Enter`. Confirm the shown evidence path and the copy in Documents.
 6. Try `Open Heat-Signal and report the visible status`. It requires network access and only reads the granted site.
-7. Press `Ctrl+Shift+Esc` during a run to request a stop. Test a second monitor and mixed-DPI window discovery separately; that needs an interactive Windows session.
+7. Use the visible **Stop** control during a run. Test a second monitor and mixed-DPI window discovery separately; that needs an interactive Windows session.
 
 ## Package for a Python-equipped Windows PC
 
@@ -22,3 +22,12 @@ Run `powershell -ExecutionPolicy Bypass -File scripts\package.ps1`. This produce
 4. GitHub will show the deployment URL in that workflow's environment summary. Verify the page and ensure it remains labeled **simulation**.
 
 The demo includes only synthetic data. Do not add screenshots, credentials, local paths, browser profiles, prompts, or real account data to the Pages artifact.
+
+## Local data location
+
+By default, settings and local run history are stored in `%USERPROFILE%\AppData\Local\RelayPilot`. In managed or sandboxed environments, set `RELAYPILOT_DATA_DIR` before launch to use another user-writable location:
+
+```powershell
+$env:RELAYPILOT_DATA_DIR = "C:\RelayPilotData"
+py -m relaypilot.app
+```

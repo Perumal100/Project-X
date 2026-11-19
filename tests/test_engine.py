@@ -7,7 +7,7 @@ import unittest
 from pathlib import Path
 
 from relaypilot.browser import BrowserProfile
-from relaypilot.config import RelaySettings
+from relaypilot.config import RelaySettings, default_settings_path
 from relaypilot.engine import RelayEngine
 from relaypilot.executor import LocalExecutor, StopRequested
 from relaypilot.history import RunHistory
@@ -15,6 +15,7 @@ from relaypilot.models import Action, RunState
 from relaypilot.policy import Policy, PolicyDenied
 from relaypilot.planner import PlannerRouter
 from relaypilot.reliability import retry_after_reconciliation
+from relaypilot.webapp import RelayService, _ui_bytes
 
 
 COMMAND = "Find the newest PDF in Downloads, copy it to Documents, open the copy, and tell me where you saved it."
@@ -173,4 +174,22 @@ class RelayEngineTests(unittest.TestCase):
 
         plan = PlannerRouter(local_model=LocalProvider()).plan("use my local model", self.downloads, self.documents)
         self.assertEqual(plan[0].kind, "browser_read_status")
+
+    def test_modern_local_ui_service_exposes_only_local_scopes(self) -> None:
+        service = RelayService(Path(self.temp.name) / "settings.json")
+        snapshot = service.snapshot()
+        self.assertIn("downloads", snapshot["folders"])
+        self.assertEqual(snapshot["sites"], ["perumal100.github.io"])
+        self.assertIn(b"Speak naturally", _ui_bytes())
+
+    def test_data_directory_override_is_explicit(self) -> None:
+        original = os.environ.get("RELAYPILOT_DATA_DIR")
+        os.environ["RELAYPILOT_DATA_DIR"] = self.temp.name
+        try:
+            self.assertEqual(default_settings_path(), Path(self.temp.name) / "settings.json")
+        finally:
+            if original is None:
+                os.environ.pop("RELAYPILOT_DATA_DIR", None)
+            else:
+                os.environ["RELAYPILOT_DATA_DIR"] = original
 
