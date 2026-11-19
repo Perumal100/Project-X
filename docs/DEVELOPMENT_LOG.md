@@ -48,3 +48,9 @@
 - Restricted extension permissions to the active tab and local bridge; it does not silently access passwords, cookies, private Google data, or all browser tabs. Automated suite passes 23 tests and validates the manifest.
 - Added a settings migration so pre-existing installations gain the new routine local actions and readable-folder scopes once, without overriding later user-managed settings.
 
+### 04:20
+
+- Corrected launch reporting so a completed run means the verified target was handed to Windows for default-app launch; it no longer claims the document or image is visibly open. A Windows launcher error now produces a failed run.
+- Added deterministic discovery and launch requests for the newest supported image in Downloads (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.bmp`, `.tif`, `.tiff`, `.heic`, and `.avif`).
+- Added regression coverage for newest-image selection, truthful launch evidence, launch failures, and the settings migration for the new action.
+
