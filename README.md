@@ -19,7 +19,7 @@ The command box intentionally does nothing until you click **Run task** or press
 
 Try: `Find the newest PDF in Downloads, copy it to Documents, open the copy, and tell me where you saved it.`
 
-Other built-in local commands include `How many PDFs are saved in my Downloads folder?`, `Open my oldest PDF on my PC`, and `Open my Downloads folder`. RelayPilot searches and opens only folders included in your local `readable_folders` grant.
+Other built-in local commands include `How many PDFs are saved in my Downloads folder?`, `Open my oldest PDF on my PC`, `Open the latest picture in my Downloads folder`, and `Open my Downloads folder`. RelayPilot searches and opens only folders included in your local `readable_folders` grant.
 
 The app uses your Windows Downloads and Documents folders. It will only operate inside these configured roots. The UI opens the copy only after its hash and destination are verified.
 
@@ -28,6 +28,7 @@ The app uses your Windows Downloads and Documents folders. It will only operate 
 - Deterministic offline planner for the newest-PDF copy workflow.
 - Typed, policy-checked local actions; no arbitrary shell execution.
 - Source/destination path containment, collision prevention, source hashing, destination hashing, and actual-path reporting.
+- Deterministic discovery for common image formats in Downloads. File launches verify the target still exists and report only that Windows accepted a default-app launch request; a launch error is a failed run, never a completion. The UI labels a successful launch request separately from a completed non-launch workflow because Windows cannot attest that another app rendered a visible window.
 - Explicit submit, stop token, visible event feed, run states, and safe policy handoffs.
 - Read-only, explicitly site-scoped Heat-Signal status check with a clear offline/connectivity result.
 - User-editable local settings, local run history with basic secret redaction, Windows window/monitor discovery, and bounded timeout reconciliation.

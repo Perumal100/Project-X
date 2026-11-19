@@ -21,6 +21,10 @@ class ConnectivityRequired(RuntimeError):
     """The requested read-only browser workflow needs an available network."""
 
 
+class FileLaunchFailed(RuntimeError):
+    """Windows could not hand a verified target to its default application."""
+
+
 class LocalExecutor:
     def __init__(self, policy: Policy, stop_requested=lambda: False, opener=None, page_fetcher=None) -> None:
         self.policy = policy
@@ -49,6 +53,16 @@ class LocalExecutor:
             oldest = min(candidates, key=lambda item: item.stat().st_mtime)
             context["selected_pdf"] = oldest.resolve()
             return (f"Found oldest PDF: {oldest.name}", str(oldest.resolve()))
+
+        if action.kind == "find_newest_image":
+            folder = Path(action.arguments["folder"])
+            self.policy.authorize(Action("find_newest_image", {"folder": folder}))
+            candidates = _images(folder)
+            if not candidates:
+                raise FileNotFoundError(f"No supported picture found in {folder}")
+            newest = max(candidates, key=lambda item: item.stat().st_mtime)
+            context["selected_file"] = newest.resolve()
+            return (f"Found newest picture: {newest.name}", str(newest.resolve()))
 
         if action.kind == "count_pdfs":
             folder = Path(action.arguments["folder"])
@@ -80,14 +94,19 @@ class LocalExecutor:
                 target = context["copied_pdf"]
             elif action.arguments["path"] == "@selected_pdf":
                 target = context["selected_pdf"]
+            elif action.arguments["path"] == "@selected_file":
+                target = context["selected_file"]
             else:
                 target = Path(action.arguments["path"])
             self.policy.authorize(Action("open_file", {"path": target}))
             self._check_stop()
             if not target.exists():
                 raise FileNotFoundError(f"Verified file no longer exists: {target}")
-            self.opener(target)
-            return (f"Opened verified copy: {target.name}", str(target.resolve()))
+            self._launch(target)
+            return (
+                f"Requested Windows default-app launch: {target.name}",
+                f"target exists and Windows accepted the launch request; path={target.resolve()}",
+            )
 
         if action.kind == "open_path":
             target = Path(action.arguments["path"])
@@ -95,8 +114,11 @@ class LocalExecutor:
             self._check_stop()
             if not target.exists():
                 raise FileNotFoundError(f"Path does not exist: {target}")
-            self.opener(target)
-            return (f"Opened approved location: {target.name or target.drive}", str(target.resolve()))
+            self._launch(target)
+            return (
+                f"Requested Windows Explorer launch: {target.name or target.drive}",
+                f"target exists and Windows accepted the launch request; path={target.resolve()}",
+            )
 
         if action.kind == "browser_read_status":
             self.policy.authorize(action)
@@ -115,10 +137,20 @@ class LocalExecutor:
         if self.stop_requested():
             raise StopRequested("Stop requested; no further input or actions were issued")
 
+    def _launch(self, target: Path) -> None:
+        try:
+            self.opener(target)
+        except OSError as error:
+            raise FileLaunchFailed(f"Windows could not launch {target.name}: {error}") from error
+
     @staticmethod
     def _default_open(path: Path) -> None:
-        if os.name == "nt":
+        if os.name != "nt":
+            raise FileLaunchFailed("Opening a file requires Windows")
+        try:
             os.startfile(path)  # type: ignore[attr-defined]
+        except OSError as error:
+            raise FileLaunchFailed(f"Windows default-app launch failed for {path.name}: {error}") from error
 
     @staticmethod
     def _fetch_page(url: str) -> str:
@@ -137,6 +169,13 @@ def _sha256(path: Path) -> str:
 
 def _pdfs(folder: Path) -> list[Path]:
     return [item for item in folder.rglob("*") if item.is_file() and item.suffix.lower() == ".pdf"]
+
+
+_IMAGE_SUFFIXES = {".avif", ".bmp", ".gif", ".heic", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"}
+
+
+def _images(folder: Path) -> list[Path]:
+    return [item for item in folder.rglob("*") if item.is_file() and item.suffix.lower() in _IMAGE_SUFFIXES]
 
 
 class _VisibleTextParser(HTMLParser):

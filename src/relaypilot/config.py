@@ -18,13 +18,13 @@ class RelaySettings:
     allowed_sites: list[str] = field(default_factory=lambda: ["perumal100.github.io"])
     allowed_actions: list[str] = field(
         default_factory=lambda: [
-            "find_newest_pdf", "find_oldest_pdf", "count_pdfs", "copy_file", "open_file", "open_path", "browser_read_status"
+            "find_newest_pdf", "find_oldest_pdf", "find_newest_image", "count_pdfs", "copy_file", "open_file", "open_path", "browser_read_status"
         ]
     )
     cloud_planning_enabled: bool = False
     cloud_screen_sharing_enabled: bool = False
     local_model_provider: str | None = None
-    schema_version: int = 2
+    schema_version: int = 3
 
     @classmethod
     def defaults(cls, downloads: Path, documents: Path) -> "RelaySettings":
@@ -35,11 +35,16 @@ class RelaySettings:
         if not path.exists():
             return fallback
         data = json.loads(path.read_text(encoding="utf-8"))
-        if data.get("schema_version", 1) < 2:
+        schema_version = data.get("schema_version", 1)
+        if schema_version < 2:
             defaults = cls.defaults(Path(data["downloads"]), Path(data["documents"]))
             data["readable_folders"] = data.get("readable_folders") or defaults.readable_folders
             data["allowed_actions"] = sorted(set(data.get("allowed_actions", [])) | set(defaults.allowed_actions))
-            data["schema_version"] = 2
+        elif schema_version < 3:
+            # This action is newly introduced in v3, so adding it cannot reverse a prior revocation.
+            data["allowed_actions"] = sorted(set(data.get("allowed_actions", [])) | {"find_newest_image"})
+        if schema_version < 3:
+            data["schema_version"] = 3
             upgraded = cls(**data)
             upgraded.save(path)
             return upgraded

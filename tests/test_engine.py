@@ -41,7 +41,7 @@ class RelayEngineTests(unittest.TestCase):
     def test_copies_verifies_and_reports_newest_pdf_offline(self) -> None:
         result = self.engine.run(COMMAND)
         copied = self.documents / "newest.pdf"
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertEqual(result.saved_path, copied.resolve())
         self.assertEqual(copied.read_bytes(), b"newest content")
         self.assertEqual((self.downloads / "newest.pdf").read_bytes(), b"newest content")
@@ -52,7 +52,7 @@ class RelayEngineTests(unittest.TestCase):
         original = os.environ.get("HTTP_PROXY")
         os.environ["HTTP_PROXY"] = "http://offline.invalid:9"
         try:
-            self.assertEqual(self.engine.run(COMMAND).state, RunState.COMPLETED)
+            self.assertEqual(self.engine.run(COMMAND).state, RunState.LAUNCH_REQUESTED)
         finally:
             if original is None:
                 os.environ.pop("HTTP_PROXY", None)
@@ -110,12 +110,36 @@ class RelayEngineTests(unittest.TestCase):
 
     def test_finds_and_opens_oldest_pdf_from_natural_command(self) -> None:
         result = self.engine.run("Open my oldest PDF on my PC")
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertEqual(self.opened, [(self.downloads / "old.pdf").resolve()])
+
+    def test_finds_and_requests_launch_of_latest_picture_in_downloads(self) -> None:
+        (self.downloads / "old.jpg").write_bytes(b"old picture")
+        time.sleep(0.01)
+        latest = self.downloads / "latest.png"
+        latest.write_bytes(b"latest picture")
+
+        result = self.engine.run("Open the latest picture in my Downloads folder")
+
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
+        self.assertEqual(self.opened, [latest.resolve()])
+        self.assertEqual(result.events[-1].message, "Requested Windows default-app launch: latest.png")
+        self.assertIn("target exists and Windows accepted", result.events[-1].evidence)
+
+    def test_default_app_launch_error_is_not_reported_as_completed(self) -> None:
+        def unavailable_viewer(_path: Path) -> None:
+            raise OSError("No default viewer is configured")
+
+        engine = RelayEngine(self.downloads, self.documents, opener=unavailable_viewer)
+        result = engine.run("Open my oldest PDF on my PC")
+
+        self.assertEqual(result.state, RunState.FAILED)
+        self.assertIn("Windows could not launch old.pdf", result.reason or "")
+        self.assertEqual(result.events[-1].message, "Run failed")
 
     def test_opens_an_approved_folder_from_natural_command(self) -> None:
         result = self.engine.run("Open my Downloads folder")
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertEqual(len(self.opened), 1)
         self.assertTrue(self.opened[0].samefile(self.downloads))
 
@@ -145,7 +169,7 @@ class RelayEngineTests(unittest.TestCase):
         (alternate_downloads / "daily.pdf").write_bytes(b"daily")
         settings = RelaySettings.defaults(alternate_downloads, alternate_documents)
         result = RelayEngine(self.downloads, self.documents, opener=self.opened.append, settings=settings).run(COMMAND)
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertTrue((alternate_documents / "daily.pdf").exists())
 
     def test_history_is_local_and_redacts_secrets(self) -> None:
@@ -222,9 +246,28 @@ class RelayEngineTests(unittest.TestCase):
             encoding="utf-8",
         )
         restored = RelaySettings.load(settings_file, RelaySettings.defaults(self.downloads, self.documents))
-        self.assertEqual(restored.schema_version, 2)
+        self.assertEqual(restored.schema_version, 3)
         self.assertIn("count_pdfs", restored.allowed_actions)
+        self.assertIn("find_newest_image", restored.allowed_actions)
         self.assertIn(str(self.documents), restored.readable_folders)
+
+    def test_version_two_settings_gain_only_the_new_image_action(self) -> None:
+        settings_file = Path(self.temp.name) / "v2-settings.json"
+        settings_file.write_text(
+            json.dumps(
+                {
+                    "downloads": str(self.downloads),
+                    "documents": str(self.documents),
+                    "readable_folders": [str(self.downloads), str(self.documents)],
+                    "allowed_actions": ["find_newest_pdf"],
+                    "schema_version": 2,
+                }
+            ),
+            encoding="utf-8",
+        )
+        restored = RelaySettings.load(settings_file, RelaySettings.defaults(self.downloads, self.documents))
+        self.assertEqual(restored.schema_version, 3)
+        self.assertEqual(set(restored.allowed_actions), {"find_newest_pdf", "find_newest_image"})
 
     def test_extension_has_active_tab_scope_not_unrestricted_site_access(self) -> None:
         manifest_path = Path(__file__).parents[1] / "extension" / "manifest.json"

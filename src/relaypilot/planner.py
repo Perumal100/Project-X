@@ -37,6 +37,15 @@ class DeterministicOfflinePlanner:
             if "open" in normalized:
                 actions.append(Action("open_file", {"path": "@selected_pdf"}))
             return actions
+        picture_words = ("picture", "image", "photo")
+        newest_words = ("newest", "latest")
+        if "open" in normalized and any(word in normalized for word in picture_words) and any(
+            word in normalized for word in newest_words
+        ) and "download" in normalized:
+            return [
+                Action("find_newest_image", {"folder": downloads}),
+                Action("open_file", {"path": "@selected_file"}),
+            ]
         if "open" in normalized and "local disk d" in normalized:
             return [Action("open_path", {"path": Path("D:/")})]
         if "open" in normalized and "download" in normalized:
