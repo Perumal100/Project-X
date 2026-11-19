@@ -24,11 +24,14 @@ The app uses your Windows Downloads and Documents folders. It will only operate 
 - Source/destination path containment, collision prevention, source hashing, destination hashing, and actual-path reporting.
 - Explicit submit, stop token, visible event feed, run states, and safe policy handoffs.
 - Read-only, explicitly site-scoped Heat-Signal status check with a clear offline/connectivity result.
+- User-editable local settings, local run history with basic secret redaction, Windows window/monitor discovery, and bounded timeout reconciliation.
 - Tests for copy verification, blocked permissions, untrusted text, offline mode, stop behavior, and uncertain-outcome reconciliation.
 
 ## Not yet a claim of completion
 
 Structured browser automation, UI Automation/multi-monitor control, online and on-device model adapters, installer signing, and a real interactive Windows hardware pass are planned interfaces, not delivered capabilities. The current browser workflow is read-only and only accesses the specifically granted Heat-Signal site. See [docs/DECISIONS.md](docs/DECISIONS.md), [docs/OFFLINE.md](docs/OFFLINE.md), and [HANDOFF.md](HANDOFF.md).
+
+Settings are kept locally at `%LOCALAPPDATA%\RelayPilot\settings.json`; browser profile and run history also stay there and are ignored by Git. This settings file is intentionally limited to scopes and provider choices—never secrets or session data.
 
 ## Test
 

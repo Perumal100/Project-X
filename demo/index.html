@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RelayPilot — simulated desktop agent</title>
+  <style>
+    :root { color-scheme: dark; --ink:#eaf0ff; --muted:#9fafd4; --bg:#0a1020; --card:#111b32; --line:#293959; --accent:#77e6b3; --warning:#ffd166; }
+    * { box-sizing:border-box; } body { margin:0; font:16px/1.5 Inter,Segoe UI,sans-serif; color:var(--ink); background:radial-gradient(circle at 15% 0%,#1e315c,transparent 38%),var(--bg); }
+    main { max-width:1080px; margin:auto; padding:4rem 1.5rem; } .eyebrow { color:var(--accent); text-transform:uppercase; letter-spacing:.13em; font-weight:700; font-size:.8rem; }
+    h1 { font-size:clamp(2.5rem,7vw,5.5rem); line-height:1; max-width:850px; margin:.5rem 0 1.2rem; } h2 { margin-top:3rem; } .lead { color:var(--muted); max-width:680px; font-size:1.15rem; }
+    .notice { border:1px solid var(--warning); color:#fff1bf; padding:.8rem 1rem; border-radius:.65rem; margin:2rem 0; } .grid { display:grid; grid-template-columns:1.2fr .8fr; gap:1rem; } .card { background:color-mix(in srgb,var(--card) 90%,transparent); border:1px solid var(--line); border-radius:1rem; padding:1.25rem; }
+    textarea { width:100%; min-height:96px; resize:vertical; border-radius:.6rem; border:1px solid var(--line); color:var(--ink); background:#091123; padding:.75rem; font:inherit; } button { margin-top:.75rem; padding:.7rem 1rem; border:0; border-radius:.55rem; color:#062016; background:var(--accent); font-weight:800; cursor:pointer; } .feed { min-height:250px; } .step { border-left:2px solid var(--line); padding:.65rem 0 .65rem 1rem; color:var(--muted); } .step.done { border-color:var(--accent); color:var(--ink); } .step.handoff { border-color:var(--warning); color:#fff1bf; } code { color:#b9caff; } @media (max-width:720px){ .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="eyebrow">RelayPilot / Windows desktop agent</div>
+    <h1>Say the task. See the evidence.</h1>
+    <p class="lead">A safety-first local agent for explicit, observable work across approved files, browser pages, and Windows apps.</p>
+    <div class="notice">Simulation only — this page does not access a browser, desktop, files, or accounts.</div>
+    <div class="grid">
+      <section class="card"><h2>Try a sample command</h2><textarea id="command">Find the newest PDF in Downloads, copy it to Documents, open the copy, and tell me where you saved it.</textarea><button id="run">Run simulated task</button></section>
+      <section class="card feed"><h2>Activity & evidence</h2><div id="feed"><div class="step">Waiting for an explicit submit.</div></div></section>
+    </div>
+    <section><h2>How the real app is designed</h2><div class="grid"><div class="card"><strong>Policy outside the model</strong><p>Typed actions are checked against local folder and site grants. Page text never creates permission.</p></div><div class="card"><strong>Verified outcomes</strong><p>File copies are hash-checked; uncertain timeouts reconcile state before a bounded retry.</p></div><div class="card"><strong>Clear handoffs</strong><p>Sign-in, MFA, CAPTCHAs, publishing, messages, purchases, and destructive work stop for user action.</p></div><div class="card"><strong>Offline-first</strong><p>The PDF workflow is deterministic and makes no cloud call. Connected reads state their network requirement.</p></div></div></section>
+    <section><h2>Quick start</h2><p>Run <code>py -m relaypilot.app</code>, dictate into the command box, then explicitly submit with <code>Ctrl+Enter</code>. Use <code>Ctrl+Shift+Esc</code> to stop.</p></section>
+  </main>
+  <script>
+    const feed = document.querySelector('#feed');
+    document.querySelector('#run').addEventListener('click', () => {
+      const command = document.querySelector('#command').value.trim();
+      const sensitive = /send|buy|publish|delete|upload|submit/i.test(command);
+      const steps = sensitive ? [
+        ['Command received', 'Explicit simulated submit.'],
+        ['Permission handoff required', 'This simulated action would be consequential; RelayPilot stops before it.']
+      ] : [
+        ['Command received', 'Explicit simulated submit.'],
+        ['Located newest PDF', 'Evidence: synthetic Downloads/report.pdf'],
+        ['Copied and verified', 'Evidence: SHA-256 matched synthetic Documents/report.pdf'],
+        ['Completed', 'No browser, file, or desktop action was performed by this demo.']
+      ];
+      feed.innerHTML = '';
+      steps.forEach(([title, detail], index) => setTimeout(() => {
+        const node = document.createElement('div'); node.className = `step ${sensitive && index === 1 ? 'handoff' : 'done'}`;
+        node.innerHTML = `<strong>${title}</strong><br>${detail}`; feed.append(node);
+      }, index * 450));
+    });
+  </script>
+</body>
+</html>

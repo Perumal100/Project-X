@@ -8,6 +8,8 @@ It performs no network operation. It accepts equivalent punctuation/capitalizati
 
 The engine can also receive typed `copy_file` actions from a trusted deterministic adapter. All paths must remain inside configured permitted roots.
 
+For flexible commands, a `LocalModelProvider` interface is available for an on-device planner. Its output remains only a list of typed actions; it has no shell or executor access. No cloud planner is enabled by default, and cloud screen sharing is disabled in the local settings.
+
 Browser commands and cloud-only data are not implemented yet. When added, they must report a clear connectivity requirement before attempting network access.
 
 ## Read-only connected workflow
