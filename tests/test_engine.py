@@ -41,7 +41,7 @@ class RelayEngineTests(unittest.TestCase):
     def test_copies_verifies_and_reports_newest_pdf_offline(self) -> None:
         result = self.engine.run(COMMAND)
         copied = self.documents / "newest.pdf"
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertEqual(result.saved_path, copied.resolve())
         self.assertEqual(copied.read_bytes(), b"newest content")
         self.assertEqual((self.downloads / "newest.pdf").read_bytes(), b"newest content")
@@ -52,7 +52,7 @@ class RelayEngineTests(unittest.TestCase):
         original = os.environ.get("HTTP_PROXY")
         os.environ["HTTP_PROXY"] = "http://offline.invalid:9"
         try:
-            self.assertEqual(self.engine.run(COMMAND).state, RunState.COMPLETED)
+            self.assertEqual(self.engine.run(COMMAND).state, RunState.LAUNCH_REQUESTED)
         finally:
             if original is None:
                 os.environ.pop("HTTP_PROXY", None)
@@ -110,7 +110,7 @@ class RelayEngineTests(unittest.TestCase):
 
     def test_finds_and_opens_oldest_pdf_from_natural_command(self) -> None:
         result = self.engine.run("Open my oldest PDF on my PC")
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertEqual(self.opened, [(self.downloads / "old.pdf").resolve()])
 
     def test_finds_and_requests_launch_of_latest_picture_in_downloads(self) -> None:
@@ -121,7 +121,7 @@ class RelayEngineTests(unittest.TestCase):
 
         result = self.engine.run("Open the latest picture in my Downloads folder")
 
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertEqual(self.opened, [latest.resolve()])
         self.assertEqual(result.events[-1].message, "Requested Windows default-app launch: latest.png")
         self.assertIn("target exists and Windows accepted", result.events[-1].evidence)
@@ -139,7 +139,7 @@ class RelayEngineTests(unittest.TestCase):
 
     def test_opens_an_approved_folder_from_natural_command(self) -> None:
         result = self.engine.run("Open my Downloads folder")
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertEqual(len(self.opened), 1)
         self.assertTrue(self.opened[0].samefile(self.downloads))
 
@@ -169,7 +169,7 @@ class RelayEngineTests(unittest.TestCase):
         (alternate_downloads / "daily.pdf").write_bytes(b"daily")
         settings = RelaySettings.defaults(alternate_downloads, alternate_documents)
         result = RelayEngine(self.downloads, self.documents, opener=self.opened.append, settings=settings).run(COMMAND)
-        self.assertEqual(result.state, RunState.COMPLETED)
+        self.assertEqual(result.state, RunState.LAUNCH_REQUESTED)
         self.assertTrue((alternate_documents / "daily.pdf").exists())
 
     def test_history_is_local_and_redacts_secrets(self) -> None:

@@ -47,7 +47,10 @@ class RelayEngine:
                 message, evidence = executor.execute(action, context)
                 events.append(Event(message, evidence))
             saved = context.get("copied_pdf")
-            return self._finish(command, RunResult(RunState.COMPLETED, events, saved_path=saved))
+            # ShellExecute accepts a launch request but cannot attest that a third-party
+            # application has rendered a visible window. Keep that distinction visible.
+            state = RunState.LAUNCH_REQUESTED if any(action.kind in {"open_file", "open_path"} for action in plan) else RunState.COMPLETED
+            return self._finish(command, RunResult(state, events, saved_path=saved))
         except StopRequested as error:
             events.append(Event("Run stopped", str(error)))
             return self._finish(command, RunResult(RunState.STOPPED, events, reason=str(error)))

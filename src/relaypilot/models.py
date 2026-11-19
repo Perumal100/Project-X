@@ -11,6 +11,7 @@ class RunState(str, Enum):
     RUNNING = "running"
     HANDOFF = "handoff"
     COMPLETED = "completed"
+    LAUNCH_REQUESTED = "launch_requested"
     BLOCKED = "blocked"
     STOPPED = "stopped"
     FAILED = "failed"

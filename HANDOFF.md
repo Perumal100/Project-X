@@ -12,7 +12,7 @@ Verified in this development environment: 15 automated tests, portable package c
 
 The current UI is served locally by `relaypilot.webapp` and launched as an app-style browser window by `relaypilot.app`. It provides optional browser voice capture as transcription only; the user still explicitly runs each task. Latest automated validation: 18 tests. Validate the visual layout and microphone browser prompt on the interactive Windows desktop after updating from `develop`.
 
-Deterministic local file workflows now also cover counting PDFs in Downloads, opening the oldest PDF, opening the latest supported picture in Downloads, and opening approved local folders. File-launch evidence now accurately records the verified target and Windows launch request; it does not claim that an app window became visible. Add a local folder to `readable_folders` in settings before using it; latest automated validation is recorded in the development log.
+Deterministic local file workflows now also cover counting PDFs in Downloads, opening the oldest PDF, opening the latest supported picture in Downloads, and opening approved local folders. File-launch evidence now accurately records the verified target and Windows launch request; it does not claim that an app window became visible. The UI records this as `launch requested`, not `completed`. Add a local folder to `readable_folders` in settings before using it; latest automated validation is recorded in the development log.
 
 ## Resume steps
 

@@ -53,4 +53,5 @@
 - Corrected launch reporting so a completed run means the verified target was handed to Windows for default-app launch; it no longer claims the document or image is visibly open. A Windows launcher error now produces a failed run.
 - Added deterministic discovery and launch requests for the newest supported image in Downloads (`.jpg`, `.jpeg`, `.png`, `.gif`, `.webp`, `.bmp`, `.tif`, `.tiff`, `.heic`, and `.avif`).
 - Added regression coverage for newest-image selection, truthful launch evidence, launch failures, and the settings migration for the new action.
+- Changed the visible terminal state for file/folder opens to `launch requested`; only non-launch workflows use `completed`. This prevents the UI from asserting that a PDF or image viewer window was observed.
 
