@@ -6,6 +6,10 @@ The first two RelayPilot milestones are on `develop` and proposed for review in 
 
 The connected `Open Heat-Signal and report the visible status` workflow is now also available. It is read-only, checks a single granted HTTPS site, and reports a connectivity blocker instead of guessing when offline.
 
+The local settings file makes allowed folders/sites editable, and a local JSONL history records redacted run evidence. `scripts/package.ps1` produces `dist\\RelayPilot.pyz`; `docs/DEPLOYMENT.md` contains the full trial and GitHub Pages process. The interactive synthetic demo is `demo/index.html` and the manual Pages workflow is `.github/workflows/pages.yml`.
+
+Verified in this development environment: 15 automated tests, portable package contents, and a live read-only Heat-Signal status response. The test results are recorded in `docs/DEVELOPMENT_LOG.md`.
+
 ## Resume steps
 
 1. Run `py -m unittest discover -s tests -v`.
@@ -19,4 +23,5 @@ The connected `Open Heat-Signal and report the visible status` workflow is now a
 - Interactive Windows open action, second monitor, and mixed-DPI UI automation.
 - Browser sign-in/MFA handoffs and any online planner/provider.
 - Clean-machine packaged installation.
+- GitHub Pages availability/deployment for this private repository, which depends on the account's Pages entitlement and an explicit manual workflow run.
 

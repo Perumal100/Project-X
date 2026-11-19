@@ -6,10 +6,15 @@ import time
 import unittest
 from pathlib import Path
 
+from relaypilot.browser import BrowserProfile
+from relaypilot.config import RelaySettings
 from relaypilot.engine import RelayEngine
 from relaypilot.executor import LocalExecutor, StopRequested
+from relaypilot.history import RunHistory
 from relaypilot.models import Action, RunState
 from relaypilot.policy import Policy, PolicyDenied
+from relaypilot.planner import PlannerRouter
+from relaypilot.reliability import retry_after_reconciliation
 
 
 COMMAND = "Find the newest PDF in Downloads, copy it to Documents, open the copy, and tell me where you saved it."
@@ -95,4 +100,66 @@ class RelayEngineTests(unittest.TestCase):
         policy = Policy((self.downloads,), (self.documents,))
         with self.assertRaises(PolicyDenied):
             policy.authorize(Action("browser_read_status", {"url": "https://example.invalid/status"}))
+
+    def test_form_submission_remains_outside_a_standing_read_grant(self) -> None:
+        policy = Policy((self.downloads,), (self.documents,))
+        with self.assertRaises(PolicyDenied):
+            policy.authorize(Action("browser_fill_form", {"url": "https://perumal100.github.io/test"}, external_effect=True))
+
+    def test_settings_round_trip_and_scoped_policy(self) -> None:
+        settings_file = Path(self.temp.name) / "settings.json"
+        settings = RelaySettings.defaults(self.downloads, self.documents)
+        settings.save(settings_file)
+        restored = RelaySettings.load(settings_file, RelaySettings.defaults(Path("missing"), Path("missing")))
+        self.assertEqual(restored.allowed_sites, ["perumal100.github.io"])
+        self.assertEqual(restored.policy().writable_roots, (self.documents,))
+
+    def test_history_is_local_and_redacts_secrets(self) -> None:
+        history = RunHistory(Path(self.temp.name) / "history.jsonl")
+        engine = RelayEngine(self.downloads, self.documents, opener=self.opened.append, history=history)
+        engine.run(COMMAND + " token=secret-value")
+        record = history.recent()[0]
+        self.assertIn("token=[redacted]", str(record["command"]))
+        self.assertNotIn("secret-value", str(record))
+
+    def test_timeout_is_reconciled_before_any_retry(self) -> None:
+        attempts = 0
+
+        def uncertain_action() -> str:
+            nonlocal attempts
+            attempts += 1
+            raise TimeoutError("result unknown")
+
+        result = retry_after_reconciliation(uncertain_action, lambda: "already completed")
+        self.assertEqual(result.value, "already completed")
+        self.assertTrue(result.recovered_after_timeout)
+        self.assertEqual(attempts, 1)
+
+    def test_timeout_retries_only_when_no_prior_completion_is_found(self) -> None:
+        attempts = 0
+
+        def eventually_works() -> str:
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                raise TimeoutError("result unknown")
+            return "completed now"
+
+        result = retry_after_reconciliation(eventually_works, lambda: None)
+        self.assertEqual(result.value, "completed now")
+        self.assertEqual(result.attempts, 2)
+
+    def test_browser_handoff_uses_a_separate_local_profile(self) -> None:
+        profile = BrowserProfile(Path(self.temp.name) / "profile")
+        handoff = profile.handoff_for_authentication("https://example.test/login", "sign in directly")
+        self.assertTrue(handoff.profile_path.exists())
+        self.assertEqual(handoff.reason, "sign in directly")
+
+    def test_configured_local_model_extension_has_no_executor_access(self) -> None:
+        class LocalProvider:
+            def plan(self, _command: str) -> list[Action]:
+                return [Action("browser_read_status", {"url": "https://perumal100.github.io/Heat-Signal/"})]
+
+        plan = PlannerRouter(local_model=LocalProvider()).plan("use my local model", self.downloads, self.documents)
+        self.assertEqual(plan[0].kind, "browser_read_status")
 

@@ -1,12 +1,19 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Protocol
 
 from .models import Action
 
 
 class UnsupportedCommand(ValueError):
     pass
+
+
+class LocalModelProvider(Protocol):
+    """Extension point for an on-device model. It receives no arbitrary execution capability."""
+
+    def plan(self, command: str) -> list[Action]: ...
 
 
 class DeterministicOfflinePlanner:
@@ -26,4 +33,20 @@ class DeterministicOfflinePlanner:
             Action("copy_file", {"source": "@newest_pdf", "destination_folder": documents}),
             Action("open_file", {"path": "@copied_pdf"}),
         ]
+
+
+class PlannerRouter:
+    def __init__(self, deterministic: DeterministicOfflinePlanner | None = None, local_model: LocalModelProvider | None = None) -> None:
+        self.deterministic = deterministic or DeterministicOfflinePlanner()
+        self.local_model = local_model
+
+    def plan(self, command: str, downloads: Path, documents: Path) -> list[Action]:
+        try:
+            return self.deterministic.plan(command, downloads, documents)
+        except UnsupportedCommand:
+            if self.local_model is None:
+                raise UnsupportedCommand(
+                    "No configured on-device planner supports that command; cloud planning is disabled by default."
+                )
+            return self.local_model.plan(command)
 
