@@ -24,6 +24,7 @@ class RelaySettings:
     cloud_planning_enabled: bool = False
     cloud_screen_sharing_enabled: bool = False
     local_model_provider: str | None = None
+    schema_version: int = 2
 
     @classmethod
     def defaults(cls, downloads: Path, documents: Path) -> "RelaySettings":
@@ -34,6 +35,14 @@ class RelaySettings:
         if not path.exists():
             return fallback
         data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("schema_version", 1) < 2:
+            defaults = cls.defaults(Path(data["downloads"]), Path(data["documents"]))
+            data["readable_folders"] = data.get("readable_folders") or defaults.readable_folders
+            data["allowed_actions"] = sorted(set(data.get("allowed_actions", [])) | set(defaults.allowed_actions))
+            data["schema_version"] = 2
+            upgraded = cls(**data)
+            upgraded.save(path)
+            return upgraded
         return cls(**data)
 
     def save(self, path: Path) -> None:

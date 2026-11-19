@@ -215,6 +215,17 @@ class RelayEngineTests(unittest.TestCase):
             else:
                 os.environ["RELAYPILOT_DATA_DIR"] = original
 
+    def test_legacy_settings_gain_new_routine_actions_once(self) -> None:
+        settings_file = Path(self.temp.name) / "legacy-settings.json"
+        settings_file.write_text(
+            json.dumps({"downloads": str(self.downloads), "documents": str(self.documents), "allowed_actions": ["find_newest_pdf"]}),
+            encoding="utf-8",
+        )
+        restored = RelaySettings.load(settings_file, RelaySettings.defaults(self.downloads, self.documents))
+        self.assertEqual(restored.schema_version, 2)
+        self.assertIn("count_pdfs", restored.allowed_actions)
+        self.assertIn(str(self.documents), restored.readable_folders)
+
     def test_extension_has_active_tab_scope_not_unrestricted_site_access(self) -> None:
         manifest_path = Path(__file__).parents[1] / "extension" / "manifest.json"
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
